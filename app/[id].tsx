@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native';
 import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import RestaurantDetails from '~/components/restaurantDetails';
+import RestaurantDetails from '~/app/restaurantDetails';
 import { dummyRestaurantsData } from '~/assets/data/restaurantsData';
 
 const RestaurantDetailsScreen = () => {

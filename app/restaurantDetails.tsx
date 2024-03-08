@@ -8,20 +8,24 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import ParallaxScrollView from '../components/ParallaxScrollView.js';
 import { AntDesign, FontAwesome, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Link, useGlobalSearchParams, useNavigation } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useAppContext } from 'context/appContext';
 
 const RestaurantDetails = ({ post }) => {
   const { id } = useGlobalSearchParams();
 
+  const { foundMeals, count, totalPrice } = useAppContext();
+
+  const navigation = useNavigation();
+
   const [headerIconColor, setHeaderIconColor] = useState('white');
   const [activeButtonIndex, setActiveButtonIndex] = useState(0);
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
-
-  const navigation = useNavigation();
+  const [showButton, setShowButton] = useState(false);
 
   const opacity = useSharedValue(0);
   const animatedStyles = useAnimatedStyle(() => ({
@@ -82,11 +86,25 @@ const RestaurantDetails = ({ post }) => {
     });
   }, [headerIconColor]);
 
+  useEffect(() => {
+    setShowButton(totalPrice > 0);
+  }, [totalPrice]);
+
   const renderItem: ListRenderItem<any> = ({ item, index }) => (
     <Link href={{ pathname: '/modalFood', params: { id: id, itemId: item.id } }} asChild>
-      <TouchableOpacity className={styles.itemContainer}>
-        <View className="flex flex-1 my-4 mr-8">
-          <Text className="text-base">{item.name}</Text>
+      <TouchableOpacity
+        className={`${styles.itemContainer} ${
+          count >= 1 && foundMeals?.id === item.id ? styles.greenBorder : ''
+        }`}>
+        <View className="flex flex-1 justify-center my-6 mr-8 ml-6">
+          <View className="flex flex-row items-center">
+            {count >= 1 && foundMeals?.id === item.id && (
+              <View className="bg-[#34BB78] items-center w-6 h-7 rounded-md mr-2">
+                <Text className="text-lg text-white font-semibold">{count}</Text>
+              </View>
+            )}
+            <Text className="text-base">{item.name}</Text>
+          </View>
           <Text className="text-sm text-[#6e6d72]">{item.info}</Text>
           <Text className="">{item.price} €</Text>
         </View>
@@ -161,16 +179,16 @@ const RestaurantDetails = ({ post }) => {
         </View>
 
         <View className={styles.itemsContainer}>
-          <View className="m-6">
+          <View>
             <SectionList
               sections={data}
               scrollEnabled={false}
               keyExtractor={(item, index) => `${item.id + index}`}
               renderItem={renderItem}
               ItemSeparatorComponent={() => <View className="border-[0.5px] border-slate-300" />}
-              SectionSeparatorComponent={() => <View className="border-[0.5px] border-slate-300" />}
+              // SectionSeparatorComponent={() => <View className="border-[0.5px] border-slate-300" />}
               renderSectionHeader={({ section: { title, index } }) => (
-                <Text className="text-2xl font-bold text-[#2e303d] my-4">{title}</Text>
+                <Text className="text-2xl font-bold text-[#2e303d] my-2 ml-6">{title}</Text>
               )}
             />
           </View>
@@ -207,6 +225,16 @@ const RestaurantDetails = ({ post }) => {
           </ScrollView>
         </View>
       </Animated.View>
+
+      {showButton && (
+        <Link href={'/basketScreen'} asChild>
+          <TouchableOpacity className="pt-4 pb-8 bg-white border-t border-gray-200">
+            <View className="bg-[#34BB78] py-3 mx-7 rounded-full font-bold items-center">
+              <Text className="text-white font-bold text-lg">View basket {totalPrice} €</Text>
+            </View>
+          </TouchableOpacity>
+        </Link>
+      )}
     </>
   );
 };
@@ -227,7 +255,8 @@ const styles = {
   separator: 'h-[0.5px] bg-slate-300 my-4',
   deliveryAbout: 'text-sm ml-1 text-[#2e303d]',
   itemsContainer: 'flex bg-white mt-2 rounded-t-2xl',
-  itemContainer: 'flex flex-row justify-between my-2 items-center',
+  itemContainer: 'flex flex-row justify-between items-center',
+  greenBorder: 'border-l-8 border-[#34BB78]',
   foodImage: 'w-28 h-27 rounded-sm',
   stickyButtonActive: 'px-2 py-1',
   styckyButton: 'px-2 py-1',
